@@ -3,12 +3,12 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>週案日誌 持ち帰り入力</title>
+  <title>週案日誌</title>
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#4CAF50">
   <link rel="icon" href="icon-192.png">
   <link rel="apple-touch-icon" href="icon-192.png">
-  <link rel="stylesheet" href="weekly-planOL.css?v=11">
+  <link rel="stylesheet" href="weekly-planYou.css?v=27">
 </head>
 
 <body>
@@ -18,13 +18,9 @@
         <div class="brandLeft">
           <img src="icon-192.png" alt="" class="appIcon">
           <div>
-            <div class="title">週案オフライン入力</div>
-            <div class="sub">園で受信・送信</div>
+            <div class="title">週案日誌</div>
+            <div class="sub">サーバー保存</div>
           </div>
-        </div>
-        <div class="headerActions">
-          <button type="button" id="btnTopReceive" class="headerAction">⬇<span>受信</span></button>
-          <button type="button" id="btnTopSend" class="headerAction sendAction">⬆<span>送信</span></button>
         </div>
       </div>
     </div>
@@ -34,7 +30,6 @@
         <button type="button" class="tabBtn active" id="tabCalendarBtn" data-tab="calendar">カレンダー</button>
         <button type="button" class="tabBtn" id="tabPhraseBtn" data-tab="phrase">定型文</button>
         <button type="button" class="tabBtn" id="tabManageBtn" data-tab="manage">管理</button>
-        <button type="button" class="tabBtn" id="tabVersionBtn" data-tab="version">バージョン</button>
       </div>
     </div>
 
@@ -92,33 +87,11 @@
       </div>
 
       <div class="card">
-        <div class="sectionTitle">個別（事例と今後の展望）</div>
-
-        <div class="caseBox">
-          <div class="caseHead">
-            <label>事例1 日付</label>
-            <input id="case1Date" type="date" />
-          </div>
-          <textarea id="case1Text" class="shortArea" placeholder="事例1（今後の展望など）"></textarea>
-          <div class="charCount" id="case1TextCount">0 / 270</div>
-        </div>
-
-        <div class="caseBox">
-          <div class="caseHead">
-            <label>事例2 日付</label>
-            <input id="case2Date" type="date" />
-          </div>
-          <textarea id="case2Text" class="shortArea" placeholder="事例2（今後の展望など）"></textarea>
-          <div class="charCount" id="case2TextCount">0 / 270</div>
-        </div>
-      </div>
-
-      <div class="card">
         <div class="statusbar">
           <div>保存：自動</div>
           <div>週キー：<span class="mono" id="weekKeyView">未設定</span></div>
           <div>最終保存：<span class="mono" id="lastSavedView">—</span></div>
-          <div>同期：<span class="mono" id="syncStatusView">—</span></div>
+          <div>サーバー：<span class="mono" id="syncStatusView">—</span></div>
         </div>
       </div>
     </section>
@@ -171,60 +144,39 @@
     </section>
 
     <section class="tabPanel" id="tabManage">
-      <div class="card">
-        <div class="sectionTitle">サーバー接続</div>
-        <div class="serverSetting">
-          <label for="serverApiUrl">園内PC URL</label>
-          <input id="serverApiUrl" type="text" placeholder="http://192.168.0.100:3000" />
-          <button type="button" id="btnSaveServerUrl">保存</button>
-        </div>
-      </div>
-
 
       <div class="card">
         <div class="sectionTitle">入力するクラス</div>
         <div class="classFilterBox" id="classFilterBox"></div>
-        <div class="smallNote">チェックしたクラスだけ、カレンダー表示・送受信の対象になります。</div>
+        <div class="smallNote">チェックしたクラスだけ、カレンダー表示の対象になります。</div>
       </div>
       <div class="card">
-        <div class="sectionTitle">管理</div>
-        <div class="manageButtons">
-          <button type="button" id="btnBackup">バックアップ</button>
-          <button type="button" id="btnRestore">データ復元</button>
-          <button type="button" class="danger" id="btnDeleteAll">データ削除</button>
-        </div>
-        <input type="file" id="restoreFileInput" accept=".csv,.zip,text/csv,application/zip" hidden>
-      </div>
-
-      <div class="card">
-        <div class="sectionTitle">この週の操作</div>
-        <div class="manageButtons">
-          <button type="button" class="danger" id="btnClear">この週を消去</button>
+        <div class="sectionTitle">サーバー接続</div>
+        <div class="serverSettingRow">
+          <label for="serverApiUrl">園内PC URL</label>
+          <input type="url" id="serverApiUrl" inputmode="url" autocomplete="off" placeholder="http://192.168.2.60:3000">
+          <button type="button" id="btnSaveServerUrl">保存</button>
         </div>
       </div>
-    </section>
 
-    <section class="tabPanel" id="tabVersion">
       <div class="card">
         <div class="sectionTitle">バージョン</div>
-
         <div class="versionRows">
           <div class="versionRow">
             <div class="versionLabel">現在のバージョン</div>
             <div class="versionValue mono" id="currentVersionView">—</div>
           </div>
-
           <div class="versionRow">
             <div class="versionLabel">最新のバージョン</div>
             <div class="versionValue mono" id="latestVersionView">確認中…</div>
           </div>
         </div>
-
         <div class="manageButtons">
           <button type="button" id="btnApplyUpdate" disabled>更新する</button>
         </div>
       </div>
     </section>
+
   </div>
 
   <div id="templatePhrasePopup" class="templatePhrasePopup" hidden>
@@ -236,6 +188,6 @@
   </div>
 
   <script src="jszip.min.js"></script>
-  <script src="weekly-planOL.js?v=11"></script>
+  <script src="weekly-planYou.js?v=28"></script>
 </body>
 </html>

@@ -26,7 +26,7 @@
     events: 90,
     evaluation: 250,
     weeklyEvaluation: 350,
-    individualText: 270,
+    individualText: 150,
     defaultJournal: 500
   };
   const BACKUP_HEADERS = [
@@ -37,32 +37,28 @@
     "day0Date",
     "day0Activity",
     "day0Evaluation",
-    "day0Attendance",
+    "day0Individual",
     "day1Date",
     "day1Activity",
     "day1Evaluation",
-    "day1Attendance",
+    "day1Individual",
     "day2Date",
     "day2Activity",
     "day2Evaluation",
-    "day2Attendance",
+    "day2Individual",
     "day3Date",
     "day3Activity",
     "day3Evaluation",
-    "day3Attendance",
+    "day3Individual",
     "day4Date",
     "day4Activity",
     "day4Evaluation",
-    "day4Attendance",
+    "day4Individual",
     "day5Date",
     "day5Activity",
     "day5Evaluation",
-    "day5Attendance",
+    "day5Individual",
     "weeklyEvaluation",
-    "case1Date",
-    "case1Text",
-    "case2Date",
-    "case2Text"
   ];
 
   const el = {
@@ -77,12 +73,6 @@
     journalBody: document.getElementById("journalBody"),
     weeklyEvaluation: document.getElementById("weeklyEvaluation"),
     weeklyEvaluationCount: document.getElementById("weeklyEvaluationCount"),
-    case1Date: document.getElementById("case1Date"),
-    case1Text: document.getElementById("case1Text"),
-    case1TextCount: document.getElementById("case1TextCount"),
-    case2Date: document.getElementById("case2Date"),
-    case2Text: document.getElementById("case2Text"),
-    case2TextCount: document.getElementById("case2TextCount"),
     weekKeyView: document.getElementById("weekKeyView"),
     lastSavedView: document.getElementById("lastSavedView"),
     syncStatusView: document.getElementById("syncStatusView"),
@@ -143,7 +133,7 @@
   let swRegistration = null;
   const CURRENT_VERSION_STORAGE_KEY = "weekly_plan_current_version";
   const SERVER_URL_STORAGE_KEY = "weekly_plan_server_url";
-  const DEFAULT_SERVER_URL = "http://192.168.1.60:3000";
+  const DEFAULT_SERVER_URL = "http://192.168.2.60:3000";
   const CLIENT_ID_STORAGE_KEY = "weekly_plan_client_id";
   const LOCK_RENEW_INTERVAL_MS = 30000;
   const ENABLED_CLASSES_STORAGE_KEY = "weekly_plan_enabled_classes";
@@ -154,6 +144,7 @@
   let isReadOnlyMode = false;
   let isLoadingWeek = false;
   let activeTemplatePhraseTarget = null;
+  let serverWeeksCache = [];
 
   const pad2 = (n) => String(n).padStart(2, "0");
 
@@ -307,7 +298,7 @@
         const checked = Array.from(el.classFilterBox.querySelectorAll('input[type="checkbox"]:checked')).map((item) => item.value);
         saveEnabledClasses(checked);
 
-        // チェックボックスはカレンダー表示と送受信対象の絞り込みに使う。
+        // チェックボックスはカレンダー表示対象の絞り込みに使う。
         renderCalendar();
       });
 
@@ -559,16 +550,12 @@
     updateFixedTextCounter(el.weeklyAim, el.weeklyAimCount, TEXT_LIMITS.weeklyAim);
     updateFixedTextCounter(el.events, el.eventsCount, TEXT_LIMITS.events);
     updateFixedTextCounter(el.weeklyEvaluation, el.weeklyEvaluationCount, TEXT_LIMITS.weeklyEvaluation);
-    updateFixedTextCounter(el.case1Text, el.case1TextCount, TEXT_LIMITS.individualText);
-    updateFixedTextCounter(el.case2Text, el.case2TextCount, TEXT_LIMITS.individualText);
   }
 
   function applyFixedTextLengthLimits() {
     applyTextLengthLimit(el.weeklyAim, TEXT_LIMITS.weeklyAim, "週のねらい");
     applyTextLengthLimit(el.events, TEXT_LIMITS.events, "行事");
     applyTextLengthLimit(el.weeklyEvaluation, TEXT_LIMITS.weeklyEvaluation, "1週間の評価");
-    applyTextLengthLimit(el.case1Text, TEXT_LIMITS.individualText, "個別");
-    applyTextLengthLimit(el.case2Text, TEXT_LIMITS.individualText, "個別");
     updateAllFixedTextCounters();
   }
 
@@ -583,9 +570,7 @@
     [
       el.weeklyAim,
       el.events,
-      el.weeklyEvaluation,
-      el.case1Text,
-      el.case2Text
+      el.weeklyEvaluation
     ].forEach(bindTemplatePhraseInput);
 
     if (el.journalBody) {
@@ -768,7 +753,15 @@
 
       body.appendChild(makeField("activity", "子どもの活動", "♟", "子どもの活動を入力してください", "blueLabel"));
       body.appendChild(makeField("evaluation", "保育評価（日誌）", "▣", "保育評価（日誌）を入力してください", "pinkLabel"));
-      body.appendChild(makeField("attendance", "出欠状況", "☻", "出欠状況を入力してください（例：風邪で○○ちゃん休み）", "greenLabel"));
+      const individualField = makeField("individual", "個別（事例と今後の展望）", "▌", "個別（事例と今後の展望）を入力してください", "blueLabel");
+      const individualTextarea = individualField.querySelector("textarea");
+      applyTextLengthLimit(individualTextarea, TEXT_LIMITS.individualText, "個別");
+      const individualCount = document.createElement("div");
+      individualCount.className = "charCount";
+      individualCount.textContent = `0 / ${TEXT_LIMITS.individualText}`;
+      individualCount.dataset.countFor = `day${i}_individual`;
+      individualField.appendChild(individualCount);
+      body.appendChild(individualField);
       card.appendChild(body);
 
       head.addEventListener("click", () => {
@@ -870,7 +863,7 @@
     const badge = el.journalBody.querySelector(`[data-badge-for="${index}"]`);
     if (!badge) return;
     const els = getJournalRowElements(index);
-    const hasText = [els.activity, els.evaluation, els.attendance].some((node) => String(node?.value || "").trim());
+    const hasText = [els.activity, els.evaluation, els.individual].some((node) => String(node?.value || "").trim());
     const isSaved = badge.dataset.saved === "1";
     badge.textContent = hasText ? (isSaved ? "保存済み" : "未保存") : "未入力";
     badge.classList.toggle("active", hasText && !isSaved);
@@ -881,7 +874,7 @@
     const badge = el.journalBody.querySelector(`[data-badge-for="${index}"]`);
     if (!badge) return;
     const els = getJournalRowElements(index);
-    const hasText = [els.activity, els.evaluation, els.attendance].some((node) => String(node?.value || "").trim());
+    const hasText = [els.activity, els.evaluation, els.individual].some((node) => String(node?.value || "").trim());
     if (!hasText) return;
 
     try {
@@ -901,7 +894,7 @@
       const badge = el.journalBody.querySelector(`[data-badge-for="${i}"]`);
       if (!badge) continue;
       const els = getJournalRowElements(i);
-      const hasText = [els.activity, els.evaluation, els.attendance].some((node) => String(node?.value || "").trim());
+      const hasText = [els.activity, els.evaluation, els.individual].some((node) => String(node?.value || "").trim());
       badge.dataset.saved = hasText ? "1" : "0";
       updateDayBadge(i);
     }
@@ -919,7 +912,7 @@
       }
       updateDayBadge(i);
       const els = getJournalRowElements(i);
-      [els.activity, els.evaluation, els.attendance].forEach(updateTextareaCounter);
+      [els.activity, els.evaluation, els.individual].forEach(updateTextareaCounter);
     }
     updateWeeklyAimStatus();
   }
@@ -928,7 +921,7 @@
     return {
       activity: el.journalBody.querySelector(`textarea[data-field="day${index}_activity"]`),
       evaluation: el.journalBody.querySelector(`textarea[data-field="day${index}_evaluation"]`),
-      attendance: el.journalBody.querySelector(`textarea[data-field="day${index}_attendance"]`)
+      individual: el.journalBody.querySelector(`textarea[data-field="day${index}_individual"]`)
     };
   }
 
@@ -940,12 +933,8 @@
       el.weeklyAim,
       el.events,
       el.weeklyEvaluation,
-      el.case1Date,
-      el.case1Text,
-      el.case2Date,
-      el.case2Text,
       el.btnClear
-    ].forEach((node) => {
+    ].filter(Boolean).forEach((node) => {
       node.disabled = !canEdit;
     });
 
@@ -954,7 +943,7 @@
       const rowEls = getJournalRowElements(i);
       if (rowEls.activity) rowEls.activity.disabled = !canEdit || !slotExists;
       if (rowEls.evaluation) rowEls.evaluation.disabled = !canEdit || !slotExists;
-      if (rowEls.attendance) rowEls.attendance.disabled = !canEdit || !slotExists;
+      if (rowEls.individual) rowEls.individual.disabled = !canEdit || !slotExists;
     }
   }
 
@@ -968,10 +957,6 @@
       events: el.events.value || "",
       journal: [],
       weeklyEvaluation: el.weeklyEvaluation.value || "",
-      individual: [
-        { dateIso: el.case1Date.value || "", text: el.case1Text.value || "" },
-        { dateIso: el.case2Date.value || "", text: el.case2Text.value || "" }
-      ],
       updatedAt: nowIso()
     };
 
@@ -984,7 +969,7 @@
         datePretty: rowDate ? formatMDJpDow(rowDate) : "",
         activity: rowDateIso && els.activity ? els.activity.value : "",
         evaluation: rowDateIso && els.evaluation ? els.evaluation.value : "",
-        attendance: rowDateIso && els.attendance ? els.attendance.value : ""
+        individual: rowDateIso && els.individual ? els.individual.value : ""
       });
     }
 
@@ -996,17 +981,13 @@
     el.weeklyAim.value = "";
     el.events.value = "";
     el.weeklyEvaluation.value = "";
-    el.case1Date.value = "";
-    el.case1Text.value = "";
-    el.case2Date.value = "";
-    el.case2Text.value = "";
     updateAllFixedTextCounters();
 
     for (let i = 0; i < 6; i++) {
       const els = getJournalRowElements(i);
       if (els.activity) els.activity.value = "";
       if (els.evaluation) els.evaluation.value = "";
-      if (els.attendance) els.attendance.value = "";
+      if (els.individual) els.individual.value = "";
     }
 
     if (!keepClass) {
@@ -1031,9 +1012,9 @@
 
 
   function getServerBaseUrl() {
-    const saved = String(localStorage.getItem(SERVER_URL_STORAGE_KEY) || "").trim().replace(/\/+$/, "");
-    if (saved) return saved;
-    return String(DEFAULT_SERVER_URL || window.location.origin).trim().replace(/\/+$/, "");
+    return String(localStorage.getItem(SERVER_URL_STORAGE_KEY) || DEFAULT_SERVER_URL)
+      .trim()
+      .replace(/\/+$/, "");
   }
 
   function setSyncStatus(text) {
@@ -1158,14 +1139,10 @@
       const isActiveSlot = Boolean(slotDates[i]);
       if (rowEls.activity) rowEls.activity.value = isActiveSlot ? (row.activity || "") : "";
       if (rowEls.evaluation) rowEls.evaluation.value = isActiveSlot ? (row.evaluation || "") : "";
-      if (rowEls.attendance) rowEls.attendance.value = isActiveSlot ? (row.attendance || "") : "";
+      if (rowEls.individual) rowEls.individual.value = isActiveSlot ? (row.individual || "") : "";
     }
 
     el.weeklyEvaluation.value = data.weeklyEvaluation ?? "";
-    el.case1Date.value = normalizeDateToISO(data.individual?.[0]?.dateIso ?? "");
-    el.case1Text.value = data.individual?.[0]?.text ?? "";
-    el.case2Date.value = normalizeDateToISO(data.individual?.[1]?.dateIso ?? "");
-    el.case2Text.value = data.individual?.[1]?.text ?? "";
     updateAllFixedTextCounters();
     el.lastSavedView.textContent = data.updatedAt || "—";
     if (el.weeklyAimSaveStatus) el.weeklyAimSaveStatus.dataset.saved = hasWeeklyAimText() ? "1" : "0";
@@ -1173,12 +1150,16 @@
   }
 
   async function saveDataToServer(data) {
+    if (!currentLock || isReadOnlyMode) {
+      throw new Error("lock required");
+    }
+
     const response = await fetch(apiUrl("/api/week"), {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "X-Client-Id": getClientId(),
-        "X-Lock-Token": currentLock ? (currentLock.token || "") : ""
+        "X-Lock-Token": currentLock.token || ""
       },
       body: JSON.stringify(data)
     });
@@ -1196,7 +1177,10 @@
   }
 
   async function loadDataFromServer(startDateIso, classKey) {
-    const response = await fetch(apiUrl("/api/week", { startDate: startDateIso, classKey }), {
+    const response = await fetch(apiUrl("/api/week", {
+      startDate: startDateIso,
+      classKey
+    }), {
       method: "GET",
       cache: "no-store"
     });
@@ -1206,7 +1190,10 @@
   }
 
   async function deleteDataFromServer(startDateIso, classKey) {
-    const response = await fetch(apiUrl("/api/week", { startDate: startDateIso, classKey }), {
+    const response = await fetch(apiUrl("/api/week", {
+      startDate: startDateIso,
+      classKey
+    }), {
       method: "DELETE",
       headers: {
         "X-Client-Id": getClientId(),
@@ -1217,7 +1204,10 @@
   }
 
   async function getServerDataList() {
-    const response = await fetch(apiUrl("/api/weeks"), { method: "GET", cache: "no-store" });
+    const response = await fetch(apiUrl("/api/weeks"), {
+      method: "GET",
+      cache: "no-store"
+    });
     if (!response.ok) throw new Error("server list failed");
     const result = await response.json();
     return Array.isArray(result.items) ? result.items : [];
@@ -1225,7 +1215,7 @@
 
   async function saveAllDataToServer(items) {
     // server.js は /api/weeks の一括POSTを持たないため、
-    // スマホ内の各データを /api/week へ1件ずつ保存する。
+    // 各データを /api/week へ1件ずつ保存する。
     // 送信対象は、管理タブでチェックされているクラスの weekly_ データだけにする。
     const enabledSet = new Set(getEnabledClasses());
     const targetItems = items.filter((data) => data && data.startDate && data.classKey && enabledSet.has(data.classKey));
@@ -1277,18 +1267,34 @@
     const classKey = el.classSelect.value || "";
     if (!classKey) {
       refreshTopLabels();
-      renderCalendar();
       return;
     }
 
-    const key = makeStorageKey(currentStartDateIso, classKey);
+    if (isReadOnlyMode || !currentLock) {
+      setSyncStatus("閲覧モード：保存しません");
+      return;
+    }
+
     const data = collectData(currentStartDateIso);
-    localStorage.setItem(key, JSON.stringify(data));
-    el.lastSavedView.textContent = data.updatedAt;
-    setSyncStatus("端末内保存");
-  
+    setSyncStatus("保存中...");
+
+    try {
+      await saveDataToServer(data);
+      el.lastSavedView.textContent = data.updatedAt;
+      setSyncStatus("保存完了");
+      updateAllDayBadges("saved");
+      await refreshServerWeeksCache();
+      renderCalendar();
+    } catch (error) {
+      console.warn("週案保存エラー:", error);
+      if (String(error && error.message || "").includes("locked")) {
+        setSyncStatus("別端末が編集中：保存できません");
+      } else {
+        setSyncStatus("保存失敗");
+      }
+    }
+
     refreshTopLabels();
-    renderCalendar();
   }
 
   function flushAutosave() {
@@ -1303,7 +1309,7 @@
   }
 
   function scheduleAutosave() {
-    if (suppressAutosave || isLoadingWeek || isReadOnlyMode) return;
+    if (suppressAutosave || isLoadingWeek) return;
     refreshTopLabels();
     if (saveTimer) {
       clearTimeout(saveTimer);
@@ -1318,20 +1324,17 @@
   }
 
   function getStoredDataList() {
-    const list = [];
-    for (let i = 0; i < localStorage.length; i++) {
-      const k = localStorage.key(i);
-      if (!k || !k.startsWith(STORAGE_PREFIX)) continue;
-      try {
-        const raw = localStorage.getItem(k);
-        if (!raw) continue;
-        const data = JSON.parse(raw);
-        if (data && data.startDate && data.classKey) {
-          list.push(data);
-        }
-      } catch (_) {}
+    return Array.isArray(serverWeeksCache) ? serverWeeksCache.slice() : [];
+  }
+
+  async function refreshServerWeeksCache() {
+    try {
+      serverWeeksCache = await getServerDataList();
+    } catch (error) {
+      console.warn("週案一覧読込エラー:", error);
+      serverWeeksCache = [];
     }
-    return list;
+    return serverWeeksCache;
   }
 
   function closeClassPicker(selectedClassKey) {
@@ -1376,7 +1379,7 @@
       list.style.gap = "10px";
 
       // クラス選択一覧は、管理タブでチェックONのクラスだけを出す。
-      // ここで絞るのは「表示する選択肢」だけ。保存・送受信のキーは変更しない。
+      // ここで絞るのは「表示する選択肢」だけ。保存データのキーは変更しない。
       const enabledClasses = getEnabledClasses();
 
       if (enabledClasses.length === 0) {
@@ -1436,9 +1439,10 @@
       saveTimer = null;
     }
 
+    await releaseCurrentLock();
     currentStartDateIso = startDateIso || "";
-    currentLock = { startDate: currentStartDateIso, classKey: el.classSelect.value || "", token: "offline" };
-    isReadOnlyMode = false;
+    currentLock = null;
+    isReadOnlyMode = true;
 
     buildJournalRows(currentStartDateIso);
     refreshTopLabels();
@@ -1467,22 +1471,42 @@
       return;
     }
 
-    const localKey = makeStorageKey(currentStartDateIso, classKey);
-    const raw = localStorage.getItem(localKey);
-    if (raw) {
-      try {
-        applyDataToInputs(JSON.parse(raw));
-      } catch (_) {
+    try {
+      setSyncStatus("サーバーから読込中...");
+      const serverData = await loadDataFromServer(currentStartDateIso, classKey);
+      if (serverData) {
+        applyDataToInputs(serverData);
+      } else {
         clearCurrentInputs(true);
       }
-    } else {
+    } catch (error) {
+      console.warn("週案読込エラー:", error);
       clearCurrentInputs(true);
+      setSyncStatus("サーバー未接続：入力できません");
+      setEditingEnabled(false);
+      refreshTopLabels();
+      renderCalendar();
+      suppressAutosave = false;
+      isLoadingWeek = false;
+      return;
     }
 
-    isReadOnlyMode = false;
-    currentLock = { startDate: currentStartDateIso, classKey, token: "offline" };
+    try {
+      const lockResult = await acquireLock(currentStartDateIso, classKey);
+      if (lockResult.ok) {
+        isReadOnlyMode = false;
+        setSyncStatus("編集できます");
+      } else {
+        isReadOnlyMode = true;
+        setSyncStatus(`${lockResult.lockedBy || "別端末"}が編集中：閲覧のみ`);
+      }
+    } catch (error) {
+      console.warn("ロック取得エラー:", error);
+      isReadOnlyMode = true;
+      setSyncStatus("ロック取得失敗：閲覧のみ");
+    }
+
     setEditingEnabled(true);
-    setSyncStatus("端末内データを表示");
     refreshTopLabels();
     renderCalendar();
     suppressAutosave = false;
@@ -1503,7 +1527,7 @@
     activateTab("main");
   }
 
-  function clearThisWeek() {
+  async function clearThisWeek() {
     if (!currentStartDateIso) {
       alert("カレンダーで週の開始日を先に選んでください。");
       return;
@@ -1513,15 +1537,19 @@
       alert("先にクラスを選択してください。");
       return;
     }
+    if (!confirm("この週のサーバー保存データを消去します。よろしいですか？")) return;
 
-    const key = makeStorageKey(currentStartDateIso, classKey);
-    if (!confirm("この週の保存データを消去します。よろしいですか？")) return;
-
-    localStorage.removeItem(key);
-    withSuppressedAutosave(() => clearCurrentInputs(true));
-    setEditingEnabled(true);
-    refreshTopLabels();
-    renderCalendar();
+    try {
+      await deleteDataFromServer(currentStartDateIso, classKey);
+      withSuppressedAutosave(() => clearCurrentInputs(true));
+      el.lastSavedView.textContent = "—";
+      setSyncStatus("サーバーから削除しました");
+      await refreshServerWeeksCache();
+      renderCalendar();
+    } catch (error) {
+      console.warn("週案削除エラー:", error);
+      alert("サーバーのデータを削除できませんでした。");
+    }
   }
 
   function resetAppToInitialState(options = {}) {
@@ -1593,18 +1621,14 @@
       startDate: toSlashDate(data.startDate),
       weeklyAim: data.weeklyAim ?? "",
       events: data.events ?? "",
-      weeklyEvaluation: data.weeklyEvaluation ?? "",
-      case1Date: toSlashDate(data.individual?.[0]?.dateIso ?? ""),
-      case1Text: data.individual?.[0]?.text ?? "",
-      case2Date: toSlashDate(data.individual?.[1]?.dateIso ?? ""),
-      case2Text: data.individual?.[1]?.text ?? ""
+      weeklyEvaluation: data.weeklyEvaluation ?? ""
     };
 
     for (let i = 0; i < 6; i++) {
       row[`day${i}Date`] = toSlashDate(data.journal?.[i]?.dateIso ?? "");
       row[`day${i}Activity`] = data.journal?.[i]?.activity ?? "";
       row[`day${i}Evaluation`] = data.journal?.[i]?.evaluation ?? "";
-      row[`day${i}Attendance`] = data.journal?.[i]?.attendance ?? "";
+      row[`day${i}Individual`] = data.journal?.[i]?.individual ?? "";
     }
 
     return row;
@@ -1634,7 +1658,7 @@
 
     const baseIso = currentStartDateIso || toISO(createLocalDate(calendarState.year, calendarState.month, 1));
     const fiscalYear = getFiscalYearFromIso(baseIso);
-    const allData = getStoredDataList().filter((data) => getFiscalYearFromIso(data.startDate) === fiscalYear);
+    const allData = (await getServerDataList()).filter((data) => getFiscalYearFromIso(data.startDate) === fiscalYear);
 
     const zip = new JSZip();
 
@@ -1729,7 +1753,7 @@
         datePretty: dateObj ? formatMDJpDow(dateObj) : "",
         activity: slotDateIso ? (obj[`day${i}Activity`] ?? "") : "",
         evaluation: slotDateIso ? (obj[`day${i}Evaluation`] ?? "") : "",
-        attendance: slotDateIso ? (obj[`day${i}Attendance`] ?? "") : ""
+        individual: slotDateIso ? (obj[`day${i}Individual`] ?? "") : ""
       });
     }
 
@@ -1740,10 +1764,6 @@
       events: obj.events || "",
       journal,
       weeklyEvaluation: obj.weeklyEvaluation || "",
-      individual: [
-        { dateIso: normalizeDateToISO(obj.case1Date), text: obj.case1Text || "" },
-        { dateIso: normalizeDateToISO(obj.case2Date), text: obj.case2Text || "" }
-      ],
       updatedAt: nowIso()
     };
   }
@@ -1765,7 +1785,6 @@
       const obj = rowToObject(headers, row);
       const data = objectToStoredData(obj);
       if (!data) continue;
-      localStorage.setItem(makeStorageKey(data.startDate, data.classKey), JSON.stringify(data));
       saveDataToServer(data).catch(() => {});
       count += 1;
     }
@@ -1850,14 +1869,11 @@
     if (String(week.events || "").trim()) return true;
     if (String(week.weeklyEvaluation || "").trim()) return true;
 
-    const individual = Array.isArray(week.individual) ? week.individual : [];
-    if (individual.some((item) => String(item?.dateIso || "").trim() || String(item?.text || "").trim())) return true;
-
     const journal = Array.isArray(week.journal) ? week.journal : [];
     return journal.some((row) => {
       return String(row?.activity || "").trim()
         || String(row?.evaluation || "").trim()
-        || String(row?.attendance || "").trim();
+        || String(row?.individual || "").trim();
     });
   }
 
@@ -1902,6 +1918,11 @@
   }
 
   function renderCalendar() {
+    if (!Number.isInteger(calendarState.year) || !Number.isInteger(calendarState.month)) {
+      const today = new Date();
+      calendarState.year = today.getFullYear();
+      calendarState.month = today.getMonth() + 1;
+    }
     const year = calendarState.year;
     const month = calendarState.month;
     const firstDay = createLocalDate(year, month, 1);
@@ -1980,11 +2001,11 @@
     const isManage = tabName === "manage";
     const isVersion = tabName === "version";
 
-    el.tabMain.classList.toggle("active", isMain);
-    el.tabCalendar.classList.toggle("active", isCalendar);
+    if (el.tabMain) el.tabMain.classList.toggle("active", isMain);
+    if (el.tabCalendar) el.tabCalendar.classList.toggle("active", isCalendar);
     if (el.tabPhrase) el.tabPhrase.classList.toggle("active", isPhrase);
-    el.tabManage.classList.toggle("active", isManage);
-    el.tabVersion.classList.toggle("active", isVersion);
+    if (el.tabManage) el.tabManage.classList.toggle("active", isManage);
+    if (el.tabVersion) el.tabVersion.classList.toggle("active", isVersion);
 
     if (el.tabMainBtn) el.tabMainBtn.classList.toggle("active", isMain);
     if (el.tabCalendarBtn) el.tabCalendarBtn.classList.toggle("active", isCalendar);
@@ -1993,9 +2014,8 @@
     if (el.tabVersionBtn) el.tabVersionBtn.classList.toggle("active", isVersion);
 
     if (isCalendar) {
-      // カレンダー表示時に自動受信しない。
-      // 自宅で入力したスマホ内データを、アプリ起動時にサーバーデータで消さないため。
-      renderCalendar();
+      // サーバー上の最新データを読み直してカレンダーへ反映する。
+      refreshServerWeeksCache().then(() => renderCalendar());
     }
     if (isPhrase) {
       renderTemplatePhraseList();
@@ -2072,21 +2092,23 @@
 
   async function setupVersionManagement() {
     await refreshVersionViews();
+    await refreshLatestVersionInfo();
 
     if (!("serviceWorker" in navigator)) {
+      swRegistration = null;
+      updateVersionButtonState();
       return;
     }
 
     try {
-      let registration = await navigator.serviceWorker.getRegistration();
-      if (!registration) {
-        registration = await navigator.serviceWorker.register("./sw.js");
-      }
-
-      bindWaitingWorker(registration);
-    } catch (_) {
-      updateVersionButtonState();
+      swRegistration = await navigator.serviceWorker.register("./sw.js", { scope: "./" });
+      await swRegistration.update().catch(() => {});
+    } catch (error) {
+      console.warn("Service Worker登録エラー:", error);
+      swRegistration = null;
     }
+
+    updateVersionButtonState();
   }
 
   async function waitForWaitingWorker(registration) {
@@ -2252,21 +2274,15 @@
   if (el.tabMainBtn) el.tabMainBtn.addEventListener("click", () => activateTab("main"));
   if (el.tabCalendarBtn) el.tabCalendarBtn.addEventListener("click", () => activateTab("calendar"));
   if (el.tabPhraseBtn) el.tabPhraseBtn.addEventListener("click", () => activateTab("phrase"));
-  if (el.tabManageBtn) el.tabManageBtn.addEventListener("click", () => activateTab("manage"));
+  if (el.tabManageBtn) el.tabManageBtn.addEventListener("click", async () => { activateTab("manage"); await refreshVersionViews(); await refreshLatestVersionInfo(); });
   if (el.tabVersionBtn) el.tabVersionBtn.addEventListener("click", () => activateTab("version"));
   el.btnApplyUpdate.addEventListener("click", applyWaitingUpdate);
   el.btnPrevMonth.addEventListener("click", () => moveCalendarMonth(-1));
   el.btnNextMonth.addEventListener("click", () => moveCalendarMonth(1));
-  el.btnClear.addEventListener("click", clearThisWeek);
-  el.btnBackup.addEventListener("click", backupAllData);
-  el.btnRestore.addEventListener("click", () => el.restoreFileInput.click());
-  el.btnDeleteAll.addEventListener("click", deleteAllData);
-  if (el.serverApiUrl) el.serverApiUrl.value = getServerBaseUrl();
-  if (el.btnSaveServerUrl) el.btnSaveServerUrl.addEventListener("click", saveServerUrlSetting);
-  if (el.btnReceiveFromServer) el.btnReceiveFromServer.addEventListener("click", receiveCurrentWeekFromServer);
-  if (el.btnSendToServer) el.btnSendToServer.addEventListener("click", sendCurrentWeekToServer);
-  if (el.btnTopReceive) el.btnTopReceive.addEventListener("click", receiveCurrentWeekFromServer);
-  if (el.btnTopSend) el.btnTopSend.addEventListener("click", sendCurrentWeekToServer);
+  
+  
+  
+  
   if (el.btnAddTemplatePhrase) el.btnAddTemplatePhrase.addEventListener("click", addTemplatePhrase);
   if (el.btnExportTemplatePhrases) el.btnExportTemplatePhrases.addEventListener("click", exportTemplatePhrases);
   if (el.btnImportTemplatePhrases) el.btnImportTemplatePhrases.addEventListener("click", () => el.templatePhraseImportInput.click());
@@ -2276,19 +2292,17 @@
   });
   if (el.btnCloseTemplatePhrasePopup) el.btnCloseTemplatePhrasePopup.addEventListener("click", closeTemplatePhrasePopup);
 
-  el.restoreFileInput.addEventListener("change", async (event) => {
-    const file = event.target.files && event.target.files[0];
-    await handleRestoreFile(file);
-  });
+  if (el.restoreFileInput) {
+    el.restoreFileInput.addEventListener("change", async (event) => {
+      const file = event.target.files && event.target.files[0];
+      await handleRestoreFile(file);
+    });
+  }
 
   [
     el.weeklyAim,
     el.events,
-    el.weeklyEvaluation,
-    el.case1Date,
-    el.case1Text,
-    el.case2Date,
-    el.case2Text
+    el.weeklyEvaluation
   ].forEach((inp) => {
     inp.addEventListener("input", () => {
       if (inp === el.weeklyAim) markWeeklyAimUnsaved();
@@ -2314,11 +2328,16 @@
   renderTemplatePhraseList();
   applyFixedTextLengthLimits();
   bindTemplatePhraseInputs();
+
+  const initialToday = new Date();
+  calendarState.year = initialToday.getFullYear();
+  calendarState.month = initialToday.getMonth() + 1;
+
   renderClassFilter();
   buildJournalRows("");
   refreshTopLabels();
   loadWeek("");
-  renderCalendar();
+  refreshServerWeeksCache().then(() => renderCalendar());
   activateTab("calendar");
   setEditingEnabled(false);
   window.addEventListener("load", () => {

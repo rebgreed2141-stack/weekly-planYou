@@ -924,3 +924,34 @@ input, select, textarea{
   background:#ecfdf5;
   border-color:#86efac;
 }
+
+.serverSettingRow{display:grid;grid-template-columns:120px minmax(0,1fr) auto;gap:10px;align-items:center}
+.serverSettingRow input{width:100%;box-sizing:border-box}
+@media(max-width:640px){.serverSettingRow{grid-template-columns:1fr}}
+
+
+/* 下部タブ：選択中を明確化 */
+.tabBtn.active {
+  background: #0b63ce;
+  color: #fff;
+  font-weight: 700;
+  border-color: #0b63ce;
+}
+
+/* 管理：クラス選択 */
+.classFilterBox {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 16px;
+  margin-top: 10px;
+}
+.classCheckItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+@media (max-width: 640px) {
+  .classFilterBox {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,12 +1,22 @@
 {
-  "name": "週案日誌 持ち帰り入力",
-  "short_name": "週案OL",
-  "start_url": "./index.html",
+  "name": "週案日誌 You",
+  "short_name": "週案You",
+  "start_url": "./",
   "display": "standalone",
   "background_color": "#f4f7f4",
   "theme_color": "#4CAF50",
   "icons": [
-    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" }
-  ]
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "scope": "./",
+  "description": "You保育園 週案日誌"
 }
