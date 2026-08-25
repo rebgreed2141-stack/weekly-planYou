@@ -613,3 +613,9 @@ input[type="month"], select {
   font-size: 12px;
   line-height: 1.5;
 }
+
+
+.admin-class-check span {
+  display: inline-block;
+  line-height: 1.2;
+}

@@ -408,16 +408,13 @@ function setupAdminClassSelection() {
   if (!container) return;
 
   const enabledIds = getEnabledClassIds();
-  container.innerHTML = CHECKLIST_MASTER.map((item) => `
-    <label class="admin-class-check">
-      <input type="checkbox" value="${item.id}" ${enabledIds.includes(item.id) ? "checked" : ""}>
-      <span>${escapeHtml(item.label)}</span>
-    </label>
-  `).join("");
+  const checkboxes = Array.from(container.querySelectorAll('input[type="checkbox"]'));
 
-  container.querySelectorAll('input[type="checkbox"]').forEach((checkbox) => {
+  checkboxes.forEach((checkbox) => {
+    checkbox.checked = enabledIds.includes(checkbox.value);
+
     checkbox.addEventListener("change", () => {
-      let checked = Array.from(container.querySelectorAll('input[type="checkbox"]:checked')).map((el) => el.value);
+      let checked = checkboxes.filter((el) => el.checked).map((el) => el.value);
 
       if (checked.length === 0) {
         checkbox.checked = true;
