@@ -1,0 +1,615 @@
+
+* { box-sizing: border-box; }
+
+:root {
+  --border-color: #d4dce4;
+  --head-bg: #eef3f8;
+  --today-bg: #fff9d9;
+  --checked-bg: #e8f7e8;
+  --checked-accent: #0b7a2b;
+  --sticky-shadow: 0 1px 0 rgba(0,0,0,0.05);
+}
+
+body {
+  margin: 16px;
+  font-family: "Yu Gothic", "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;
+  color: #222;
+  background: #ffffff;
+}
+
+.tabs {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.tabs-left {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.app-version {
+  margin-left: auto;
+  font-size: 12px;
+  color: #666;
+}
+
+.tab-btn, .secondary-btn, .admin-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 46px;
+  padding: 0 18px;
+  border: 1px solid #b8c2cc;
+  border-radius: 10px;
+  background: #f3f5f7;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.tab-btn.active {
+  background: #dfe9f3;
+}
+
+.secondary-btn {
+  background: #fff;
+  min-width: 110px;
+}
+
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+.sticky-header {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  padding-bottom: 10px;
+  background: #fff;
+}
+
+.header-grid {
+  display: grid;
+  grid-template-columns: minmax(160px, 200px) minmax(160px, 200px) 120px repeat(3, minmax(120px, 1fr));
+  gap: 12px;
+  align-items: end;
+  padding: 10px 0;
+}
+
+.field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.field-group label,
+.summary-label {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+input[type="month"], select {
+  width: 100%;
+  min-height: 48px;
+  padding: 10px 12px;
+  border: 1px solid #bcc6d0;
+  border-radius: 10px;
+  font-size: 20px;
+  background: #fff;
+}
+
+.summary-card {
+  min-height: 84px;
+  padding: 10px 14px;
+  border: 1px solid #cfd8e1;
+  border-radius: 12px;
+  background: #f8fbff;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.summary-value {
+  margin-top: 4px;
+  font-size: 28px;
+  font-weight: 700;
+}
+
+.header-note {
+  font-size: 14px;
+  color: #667;
+  padding-bottom: 8px;
+}
+
+.matrix-wrap {
+  overflow: auto;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  max-height: calc(100vh - 190px);
+  background: #fff;
+}
+
+.matrix-table {
+  border-collapse: separate;
+  border-spacing: 0;
+  min-width: max-content;
+  width: max-content;
+}
+
+.matrix-table th,
+.matrix-table td {
+  border-right: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--border-color);
+  padding: 0;
+  background: #fff;
+}
+
+.matrix-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 15;
+  background: var(--head-bg);
+  box-shadow: var(--sticky-shadow);
+}
+
+.matrix-table .corner-head {
+  left: 0;
+  z-index: 25;
+  position: sticky;
+  min-width: 420px;
+  max-width: 420px;
+}
+
+.matrix-table .item-head {
+  min-width: 420px;
+  max-width: 420px;
+  text-align: left;
+  padding: 12px 14px;
+}
+
+.matrix-table .date-head {
+  min-width: 74px;
+  width: 74px;
+  text-align: center;
+  padding: 10px 4px;
+  font-size: 16px;
+}
+
+.date-head.today {
+  background: var(--today-bg);
+}
+
+.date-num {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.date-weekday {
+  margin-top: 4px;
+  font-size: 13px;
+  color: #455;
+}
+
+.matrix-table .item-cell {
+  position: sticky;
+  left: 0;
+  z-index: 10;
+  min-width: 420px;
+  max-width: 420px;
+  padding: 12px 14px;
+  background: #fff;
+  font-size: 17px;
+  line-height: 1.55;
+  box-shadow: var(--sticky-shadow);
+}
+
+.item-no {
+  display: inline-block;
+  min-width: 42px;
+  margin-right: 10px;
+  font-weight: 700;
+  color: #456;
+}
+
+.matrix-table .check-cell {
+  width: 74px;
+  min-width: 74px;
+  text-align: center;
+  vertical-align: middle;
+  background: #fff;
+}
+
+.matrix-table .check-cell.today {
+  background: #fffcf0;
+}
+
+.check-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 58px;
+}
+
+.matrix-table input[type="checkbox"] {
+  width: 28px;
+  height: 28px;
+  cursor: pointer;
+}
+
+.check-cell.is-checked {
+  background: var(--checked-bg);
+}
+
+.check-cell.is-checked input[type="checkbox"] {
+  accent-color: var(--checked-accent);
+}
+
+.month-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.month-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.month-toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.month-title {
+  margin: 0;
+  font-size: 28px;
+}
+
+.month-class-label {
+  font-size: 18px;
+  font-weight: 700;
+  color: #456;
+}
+
+.month-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(150px, 1fr));
+  gap: 12px;
+}
+
+.month-card {
+  border: 1px solid #d6dee7;
+  border-radius: 12px;
+  background: #f8fbff;
+  padding: 12px 14px;
+}
+
+.month-card-label {
+  font-size: 14px;
+  color: #556;
+}
+
+.month-card-value {
+  margin-top: 6px;
+  font-size: 30px;
+  font-weight: 700;
+}
+
+.daily-grid-wrap {
+  overflow: auto;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+}
+
+.daily-summary-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.daily-summary-table th,
+.daily-summary-table td {
+  border: 1px solid var(--border-color);
+  padding: 12px 10px;
+  text-align: center;
+  font-size: 17px;
+}
+
+.daily-summary-table th {
+  background: var(--head-bg);
+}
+
+.daily-summary-table tr.day-row {
+  cursor: pointer;
+}
+
+.daily-summary-table tr.day-row:hover {
+  background: #f7fbff;
+}
+
+.daily-summary-table tr.day-row.selected {
+  background: #e7f0fb;
+}
+
+.missing-panel {
+  border: 1px solid #d6dee7;
+  border-radius: 12px;
+  padding: 14px;
+  background: #fff;
+}
+
+.missing-title {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.missing-list ul {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.missing-list li {
+  margin: 0 0 8px;
+  line-height: 1.6;
+}
+
+.admin-page {
+  max-width: 428px;
+  margin: 0;
+}
+
+.admin-heading {
+  margin: 0 0 8px 0;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.admin-subtitle {
+  margin-bottom: 18px;
+  color: #7b8794;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.server-card {
+  margin-bottom: 14px;
+  padding: 16px;
+  border: 1px solid #d5dde7;
+  border-radius: 14px;
+  background: #ffffff;
+}
+
+.server-title {
+  margin-bottom: 18px;
+  padding-left: 10px;
+  border-left: 4px solid #2563eb;
+  color: #0f2744;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.server-label {
+  display: block;
+  margin-bottom: 10px;
+  color: #0f2744;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.server-input {
+  display: block;
+  width: 100%;
+  min-height: 48px;
+  margin-bottom: 10px;
+  padding: 10px 12px;
+  border: 1px solid #c8d2df;
+  border-radius: 10px;
+  background: #ffffff;
+  font-size: 16px;
+}
+
+.server-save-btn,
+.admin-action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 48px;
+  border-radius: 10px;
+  font-size: 17px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.server-save-btn {
+  border: 1px solid #d5dde7;
+  background: #ffffff;
+  color: #102033;
+}
+
+.admin-action-btn {
+  margin-bottom: 12px;
+  border: 1px solid #d5dde7;
+  background: #ffffff;
+  color: #102033;
+}
+
+.backup-btn,
+.send-btn {
+  border-color: #4caf50;
+  background: #4caf50;
+  color: #ffffff;
+}
+
+.delete-btn {
+  border-color: #cf262b;
+  background: #cf262b;
+  color: #ffffff;
+}
+
+.admin-note {
+  margin-top: 10px;
+  color: #556;
+  line-height: 1.6;
+}
+
+@media (max-width: 960px) {
+  body { margin: 10px; }
+
+  /* 入力画面上部を縦方向にコンパクト化
+     1段目：クラス／対象月／今月へ
+     2段目：チェック済み／対象マス数／達成率 */
+  .sticky-header {
+    padding-bottom: 4px;
+  }
+
+  .header-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px 10px;
+    padding: 4px 0;
+  }
+
+  .field-group {
+    gap: 3px;
+  }
+
+  .field-group label,
+  .summary-label {
+    font-size: 13px;
+  }
+
+  input[type="month"], select {
+    min-height: 40px;
+    padding: 6px 10px;
+    font-size: 18px;
+    border-radius: 8px;
+  }
+
+  #today-btn {
+    min-height: 40px;
+    padding: 0 10px;
+  }
+
+  .summary-card {
+    min-height: 56px;
+    padding: 6px 10px;
+    border-radius: 9px;
+  }
+
+  .summary-value {
+    margin-top: 1px;
+    font-size: 22px;
+  }
+
+  .header-note {
+    padding: 2px 0 4px;
+    font-size: 12px;
+  }
+
+  .matrix-wrap {
+    max-height: calc(100vh - 160px);
+  }
+  .matrix-table .corner-head,
+  .matrix-table .item-head,
+  .matrix-table .item-cell {
+    min-width: 280px;
+    max-width: 280px;
+  }
+  .month-summary {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .tab-btn, .secondary-btn, .admin-btn {
+    min-height: 42px;
+    font-size: 16px;
+  }
+  input[type="month"], select {
+    font-size: 18px;
+  }
+  .summary-value,
+  .month-card-value {
+    font-size: 24px;
+  }
+  .matrix-table .date-head,
+  .matrix-table .check-cell {
+    min-width: 62px;
+    width: 62px;
+  }
+}
+
+
+.version-page {
+  max-width: 760px;
+  padding: 12px 0;
+}
+
+.version-card {
+  margin: 14px 0;
+  padding: 16px;
+  border: 1px solid #cfd8e1;
+  border-radius: 14px;
+  background: #f8fbff;
+}
+
+.version-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #556;
+  margin-bottom: 8px;
+}
+
+.version-value {
+  font-size: 28px;
+  font-weight: 700;
+}
+
+.version-note {
+  margin-top: 10px;
+  color: #667;
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+
+.admin-class-checkboxes {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 12px;
+}
+
+.admin-class-check {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 42px;
+  padding: 8px 10px;
+  border: 1px solid #d5dde7;
+  border-radius: 10px;
+  background: #f8fafc;
+  color: #0f2744;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.admin-class-check input {
+  width: 20px;
+  height: 20px;
+  margin: 0;
+}
+
+.class-select-note {
+  margin-top: 10px;
+  color: #7b8794;
+  font-size: 12px;
+  line-height: 1.5;
+}
