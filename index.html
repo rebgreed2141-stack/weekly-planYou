@@ -1,163 +1,199 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ja">
 <head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>週案日誌</title>
   <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#4CAF50">
   <link rel="icon" href="icon-192.png">
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>クラス別チェックリスト</title>
-  <link rel="stylesheet" href="styles.css">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="stylesheet" href="weekly-planYou.css?v=27">
 </head>
+
 <body>
-  <div class="tabs">
-    <div class="tabs-left">
-      <button class="tab-btn active" data-tab="input">入力</button>
-      <button class="tab-btn" data-tab="month">月一覧</button>
-      <button class="tab-btn" data-tab="admin">管理</button>
-      <button class="tab-btn" data-tab="version">バージョン</button>
+  <div class="app">
+    <div class="header">
+      <div class="brand">
+        <div class="brandLeft">
+          <img src="icon-192.png" alt="" class="appIcon">
+          <div>
+            <div class="title">週案日誌</div>
+            <div class="sub">サーバー保存</div>
+          </div>
+        </div>
+      </div>
     </div>
-    <div class="app-version" id="app-version">Ver.確認中</div>
+
+    <div class="tabBar">
+      <div class="tabBarLeft">
+        <button type="button" class="tabBtn active" id="tabCalendarBtn" data-tab="calendar">カレンダー</button>
+        <button type="button" class="tabBtn" id="tabPhraseBtn" data-tab="phrase">定型文</button>
+        <button type="button" class="tabBtn" id="tabManageBtn" data-tab="manage">管理</button>
+      </div>
+    </div>
+
+    <section class="tabPanel" id="tabMain">
+      <div class="card">
+        <div class="autoLine">
+          <label>クラス</label>
+          <div class="inputs">
+            <select id="classSelect">
+              <option value="">クラス（選択）</option>
+              <option value="もみじ">もみじ</option>
+              <option value="どんぐり">どんぐり</option>
+              <option value="こぐま">こぐま</option>
+              <option value="りす">りす</option>
+              <option value="のうさぎ">のうさぎ</option>
+              <option value="かもしか">かもしか</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="autoLine">
+          <label>週</label>
+          <div class="autoValue" id="weekLabel">—</div>
+        </div>
+
+        <div class="autoLine" style="margin-bottom:0;">
+          <label>クラス</label>
+          <div class="autoValue" id="classLabel">—</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="sectionTitle sectionTitleWithStatus">
+          <span>週のねらい</span>
+          <button type="button" id="weeklyAimSaveStatus" class="saveStatusBadge" aria-label="週のねらいを保存">未入力</button>
+        </div>
+        <textarea id="weeklyAim" placeholder="週のねらいを入力"></textarea>
+        
+        <div class="sectionTitle" style="margin-top:10px;">子どもの姿</div>
+        <textarea id="childAppearance" placeholder="子どもの姿を入力"></textarea>
+
+        <div class="sectionTitle" style="margin-top:10px;">行事（空欄OK）</div>
+        <textarea id="events" placeholder="行事がなければ空欄"></textarea>
+      </div>
+
+      <div class="journalInfo">
+        6日分の入力ができます。各日のカードをタップして開閉してください。
+      </div>
+
+      <div class="dayCards" id="journalBody"></div>
+
+      <div class="card">
+        <div class="sectionTitle">保護者等への支援</div>
+        <textarea id="parentSupport" class="shortArea" placeholder="保護者等への支援を入力"></textarea>
+
+        <div class="sectionTitle" style="margin-top:10px;">子どもの姿と反省・評価</div>
+        <textarea id="childReflection" class="shortArea" placeholder="子どもの姿と反省・評価を入力"></textarea>
+
+        <div class="sectionTitle" style="margin-top:10px;">自己評価</div>
+        <textarea id="selfEvaluation" class="shortArea" placeholder="自己評価を入力"></textarea>
+      </div>
+
+      <div class="card">
+        <div class="statusbar">
+          <div>保存：自動</div>
+          <div>週キー：<span class="mono" id="weekKeyView">未設定</span></div>
+          <div>最終保存：<span class="mono" id="lastSavedView">—</span></div>
+          <div>サーバー：<span class="mono" id="syncStatusView">—</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="tabPanel active" id="tabCalendar">
+      <div class="card">
+        <div class="calendarHead">
+          <button type="button" id="btnPrevMonth">前の月</button>
+          <div class="calendarTitle" id="calendarTitle">—</div>
+          <button type="button" id="btnNextMonth">次の月</button>
+        </div>
+        <div class="calendarHelp">月曜日を選択できます。4月1日が火〜土の年度だけ、その4月1日も選択できます。入力日は各クラスの頭文字（も・ど・こ・り・の・か）で表示します。</div>
+
+        <div class="calendarWeekHeader">
+          <div>日</div>
+          <div>月</div>
+          <div>火</div>
+          <div>水</div>
+          <div>木</div>
+          <div>金</div>
+          <div>土</div>
+        </div>
+
+        <div class="calendarGrid" id="calendarGrid"></div>
+      </div>
+    </section>
+
+    <section class="tabPanel" id="tabPhrase">
+      <div class="card">
+        <div class="sectionTitle">定型文</div>
+        <div class="phraseAddRow">
+          <textarea id="templatePhraseText" class="templatePhraseInput" placeholder="定型文を入力"></textarea>
+          <button type="button" id="btnAddTemplatePhrase">登録</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="sectionTitle">登録済み一覧</div>
+        <div id="templatePhraseList" class="templatePhraseList"></div>
+      </div>
+
+      <div class="card phraseImportExport">
+        <div class="sectionTitle">インポート・エクスポート</div>
+        <div class="manageButtons">
+          <button type="button" id="btnExportTemplatePhrases">エクスポート</button>
+          <button type="button" id="btnImportTemplatePhrases">インポート</button>
+        </div>
+        <input type="file" id="templatePhraseImportInput" accept=".json,application/json" hidden>
+      </div>
+    </section>
+
+    <section class="tabPanel" id="tabManage">
+
+      <div class="card">
+        <div class="sectionTitle">入力するクラス</div>
+        <div class="classFilterBox" id="classFilterBox"></div>
+        <div class="smallNote">チェックしたクラスだけ、カレンダー表示の対象になります。</div>
+      </div>
+      <div class="card">
+        <div class="sectionTitle">サーバー接続</div>
+        <div class="serverSettingRow">
+          <label for="serverApiUrl">園内PC URL</label>
+          <input type="url" id="serverApiUrl" inputmode="url" autocomplete="off" placeholder="http://192.168.2.60:3000">
+          <button type="button" id="btnSaveServerUrl">保存</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="sectionTitle">バージョン</div>
+        <div class="versionRows">
+          <div class="versionRow">
+            <div class="versionLabel">現在のバージョン</div>
+            <div class="versionValue mono" id="currentVersionView">—</div>
+          </div>
+          <div class="versionRow">
+            <div class="versionLabel">最新のバージョン</div>
+            <div class="versionValue mono" id="latestVersionView">確認中…</div>
+          </div>
+        </div>
+        <div class="manageButtons">
+          <button type="button" id="btnApplyUpdate" disabled>更新する</button>
+        </div>
+      </div>
+    </section>
+
   </div>
 
-  <section id="tab-input" class="tab-panel active">
-    <div class="sticky-header">
-      <div class="header-grid">
-        <div class="field-group">
-          <label for="class-select">クラス</label>
-          <select id="class-select"></select>
-        </div>
-
-        <div class="field-group">
-          <label for="month-select">対象月</label>
-          <input type="month" id="month-select">
-        </div>
-
-        <div class="field-group">
-          <label>&nbsp;</label>
-          <button id="today-btn" class="secondary-btn" type="button">今月へ</button>
-        </div>
-
-        <div class="summary-card">
-          <div class="summary-label">チェック済み</div>
-          <div id="checked-count" class="summary-value">0</div>
-        </div>
-
-        <div class="summary-card">
-          <div class="summary-label">対象マス数</div>
-          <div id="total-count" class="summary-value">0</div>
-        </div>
-
-        <div class="summary-card">
-          <div class="summary-label">達成率</div>
-          <div id="checked-rate" class="summary-value">0%</div>
-        </div>
-      </div>
-      <div class="header-note">日曜日は自動で非表示。左端の項目名と上の日付は固定です。</div>
+  <div id="templatePhrasePopup" class="templatePhrasePopup" hidden>
+    <div class="templatePhrasePopupHead">
+      <div>定型文</div>
+      <button type="button" id="btnCloseTemplatePhrasePopup">×</button>
     </div>
+    <div id="templatePhrasePopupList" class="templatePhrasePopupList"></div>
+  </div>
 
-    <div class="matrix-wrap">
-      <table class="matrix-table">
-        <thead id="matrix-head"></thead>
-        <tbody id="matrix-body"></tbody>
-      </table>
-    </div>
-  </section>
-
-  <section id="tab-month" class="tab-panel">
-    <div class="month-wrap">
-      <div class="month-toolbar">
-        <div class="month-toolbar-left">
-          <button id="prev-month-btn" class="secondary-btn" type="button">前月</button>
-          <h2 id="month-title" class="month-title"></h2>
-          <button id="next-month-btn" class="secondary-btn" type="button">次月</button>
-        </div>
-        <div id="month-class-label" class="month-class-label"></div>
-      </div>
-      <div id="month-summary" class="month-summary"></div>
-      <div class="daily-grid-wrap">
-        <table class="daily-summary-table">
-          <thead>
-            <tr>
-              <th>日付</th>
-              <th>曜日</th>
-              <th>完了数</th>
-              <th>達成率</th>
-              <th>未チェック数</th>
-            </tr>
-          </thead>
-          <tbody id="daily-summary-body"></tbody>
-        </table>
-      </div>
-      <div id="missing-panel" class="missing-panel">
-        <div class="missing-title">日付を押すと、その日の未チェック項目をここに表示します。</div>
-        <div id="missing-list"></div>
-      </div>
-    </div>
-  </section>
-
-  <section id="tab-admin" class="tab-panel">
-    <div class="admin-page">
-      <h2 class="admin-heading">管理</h2>
-      <div class="admin-subtitle">サーバーの読込・保存、バックアップ、復元、削除を行います。</div>
-
-
-      <div class="server-card">
-        <div class="server-title">入力するクラス</div>
-        <div id="admin-class-checkboxes" class="admin-class-checkboxes">
-          <label class="admin-class-check"><input type="checkbox" value="class0"><span>もみじ</span></label>
-          <label class="admin-class-check"><input type="checkbox" value="class1"><span>どんぐり</span></label>
-          <label class="admin-class-check"><input type="checkbox" value="class2"><span>こぐま</span></label>
-          <label class="admin-class-check"><input type="checkbox" value="class3"><span>りす</span></label>
-          <label class="admin-class-check"><input type="checkbox" value="class4"><span>のうさぎ</span></label>
-          <label class="admin-class-check"><input type="checkbox" value="class5"><span>かもしか</span></label>
-        </div>
-        <div class="class-select-note">チェックしたクラスだけを入力画面のクラス選択に表示します。</div>
-      </div>
-
-      <div class="server-card">
-        <div class="server-title">サーバー接続</div>
-        <label class="server-label" for="server-url-input">園内PC URL</label>
-        <input type="url" id="server-url-input" class="server-input" value="http://192.168.2.60:3000">
-        <button id="save-server-url-btn" class="server-save-btn" type="button">保存</button>
-      </div>
-
-      <button id="backup-btn" class="admin-action-btn backup-btn" type="button">バックアップ</button>
-      <button id="load-server-btn" class="admin-action-btn send-btn" type="button">サーバーから読込</button>
-      <button id="send-server-btn" class="admin-action-btn send-btn" type="button">今すぐサーバー保存</button>
-      <button id="restore-btn" class="admin-action-btn restore-btn" type="button">データ復元</button>
-      <button id="delete-btn" class="admin-action-btn delete-btn" type="button">データ削除</button>
-      <input type="file" id="restore-file" accept=".json" hidden>
-
-      <div class="admin-note" id="admin-note">
-        起動時にサーバーから最新データを読み込み、チェック変更時は自動でサーバーへ保存します。
-      </div>
-    </div>
-  </section>
-
-
-  <section id="tab-version" class="tab-panel">
-    <div class="version-page">
-      <h2 class="admin-heading">バージョン</h2>
-      <div id="version-status" class="admin-subtitle">バージョン情報を確認しています。</div>
-
-      <div class="version-card">
-        <div class="version-title">現在のバージョン</div>
-        <div id="current-version-text" class="version-value">確認中</div>
-      </div>
-
-      <div class="version-card">
-        <div class="version-title">最新のバージョン</div>
-        <div id="latest-version-text" class="version-value">確認中</div>
-      </div>
-
-      <div class="version-card">
-        <button id="version-reload-btn" class="admin-action-btn backup-btn" type="button">再確認</button>
-        <div class="version-note">version.json を変更すると、この画面に反映されます。</div>
-      </div>
-    </div>
-  </section>
-
-  <script src="checklists.js"></script>
-  <script src="app.js"></script>
+  <script src="jszip.min.js"></script>
+  <script src="weekly-planYou.js?v=28"></script>
 </body>
 </html>

@@ -1,6 +1,5 @@
 const STORAGE_KEY = "class_checklist_matrix_v1";
 const SERVER_URL_KEY = "hcheckYou_server_url";
-const ENABLED_CLASSES_KEY = "hcheckYou_enabled_classes";
 const DEFAULT_SERVER_URL = "http://192.168.2.60:3000";
 const VERSION_INFO_URL = "./version.json";
 const DEFAULT_VERSION = "0.1.0";
@@ -42,38 +41,11 @@ function setupTabs() {
   });
 }
 
-function getEnabledClassIds() {
-  try {
-    const raw = localStorage.getItem(ENABLED_CLASSES_KEY);
-    if (!raw) return CHECKLIST_MASTER.map((item) => item.id);
-    const ids = JSON.parse(raw);
-    if (!Array.isArray(ids)) return CHECKLIST_MASTER.map((item) => item.id);
-    const validIds = ids.filter((id) => CHECKLIST_MASTER.some((item) => item.id === id));
-    return validIds.length ? validIds : CHECKLIST_MASTER.map((item) => item.id);
-  } catch (error) {
-    console.error(error);
-    return CHECKLIST_MASTER.map((item) => item.id);
-  }
-}
-
-function refreshClassSelector() {
-  const classSelect = document.getElementById("class-select");
-  const enabledIds = getEnabledClassIds();
-  const enabledClasses = CHECKLIST_MASTER.filter((item) => enabledIds.includes(item.id));
-
-  classSelect.innerHTML = enabledClasses.map((item) => {
-    return `<option value="${item.id}">${escapeHtml(item.label)}（${item.itemCount}項目）</option>`;
-  }).join("");
-
-  if (!enabledIds.includes(selectedClassId)) {
-    selectedClassId = enabledClasses[0]?.id || CHECKLIST_MASTER[0].id;
-  }
-  classSelect.value = selectedClassId;
-}
-
 function setupSelectors() {
   const classSelect = document.getElementById("class-select");
-  refreshClassSelector();
+  classSelect.innerHTML = CHECKLIST_MASTER.map((item) => {
+    return `<option value="${item.id}">${escapeHtml(item.label)}（${item.itemCount}項目）</option>`;
+  }).join("");
 
   classSelect.addEventListener("change", () => {
     selectedClassId = classSelect.value;
@@ -104,7 +76,7 @@ function initializeState() {
   const today = new Date();
   selectedMonth = formatMonthInput(today.getFullYear(), today.getMonth() + 1);
   document.getElementById("month-select").value = selectedMonth;
-  refreshClassSelector();
+  document.getElementById("class-select").value = selectedClassId;
 }
 
 function getCurrentClassDef() {
@@ -403,37 +375,7 @@ function setCheckedValue(classId, dateKey, itemNo, value) {
   saveStore(store);
 }
 
-function setupAdminClassSelection() {
-  const container = document.getElementById("admin-class-checkboxes");
-  if (!container) return;
-
-  const enabledIds = getEnabledClassIds();
-  const checkboxes = Array.from(container.querySelectorAll('input[type="checkbox"]'));
-
-  checkboxes.forEach((checkbox) => {
-    checkbox.checked = enabledIds.includes(checkbox.value);
-
-    checkbox.addEventListener("change", () => {
-      let checked = checkboxes.filter((el) => el.checked).map((el) => el.value);
-
-      if (checked.length === 0) {
-        checkbox.checked = true;
-        checked = [checkbox.value];
-        alert("入力するクラスは1つ以上選択してください。");
-      }
-
-      localStorage.setItem(ENABLED_CLASSES_KEY, JSON.stringify(checked));
-      refreshClassSelector();
-      selectedMissingDateKey = "";
-      renderMatrix();
-      renderMonthTab();
-    });
-  });
-}
-
 function setupAdmin() {
-  setupAdminClassSelection();
-
   const serverUrlInput = document.getElementById("server-url-input");
   const currentOrigin = /^https?:$/i.test(location.protocol) ? location.origin : "";
   const savedUrl = localStorage.getItem(SERVER_URL_KEY) || currentOrigin || DEFAULT_SERVER_URL;

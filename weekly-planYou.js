@@ -21,44 +21,52 @@
   };
   const classOrder = ["もみじ", "どんぐり", "こぐま", "りす", "のうさぎ", "かもしか"];
   const STORAGE_PREFIX = "weekly_";
-  const TEXT_LIMITS = {
-    weeklyAim: 120,
-    events: 90,
-    evaluation: 250,
-    weeklyEvaluation: 350,
-    individualText: 150,
-    defaultJournal: 500
-  };
+  const TEXT_LIMITS = {};
   const BACKUP_HEADERS = [
     "classKey",
     "startDate",
     "weeklyAim",
+    "childAppearance",
     "events",
     "day0Date",
+    "day0Environment",
     "day0Activity",
+    "day0Consideration",
     "day0Evaluation",
-    "day0Individual",
+    "day0AbsenceStatus",
     "day1Date",
+    "day1Environment",
     "day1Activity",
+    "day1Consideration",
     "day1Evaluation",
-    "day1Individual",
+    "day1AbsenceStatus",
     "day2Date",
+    "day2Environment",
     "day2Activity",
+    "day2Consideration",
     "day2Evaluation",
-    "day2Individual",
+    "day2AbsenceStatus",
     "day3Date",
+    "day3Environment",
     "day3Activity",
+    "day3Consideration",
     "day3Evaluation",
-    "day3Individual",
+    "day3AbsenceStatus",
     "day4Date",
+    "day4Environment",
     "day4Activity",
+    "day4Consideration",
     "day4Evaluation",
-    "day4Individual",
+    "day4AbsenceStatus",
     "day5Date",
+    "day5Environment",
     "day5Activity",
+    "day5Consideration",
     "day5Evaluation",
-    "day5Individual",
-    "weeklyEvaluation",
+    "day5AbsenceStatus",
+    "parentSupport",
+    "childReflection",
+    "selfEvaluation",
   ];
 
   const el = {
@@ -68,11 +76,13 @@
     weeklyAim: document.getElementById("weeklyAim"),
     weeklyAimCount: document.getElementById("weeklyAimCount"),
     weeklyAimSaveStatus: document.getElementById("weeklyAimSaveStatus"),
+    childAppearance: document.getElementById("childAppearance"),
     events: document.getElementById("events"),
     eventsCount: document.getElementById("eventsCount"),
     journalBody: document.getElementById("journalBody"),
-    weeklyEvaluation: document.getElementById("weeklyEvaluation"),
-    weeklyEvaluationCount: document.getElementById("weeklyEvaluationCount"),
+    parentSupport: document.getElementById("parentSupport"),
+    childReflection: document.getElementById("childReflection"),
+    selfEvaluation: document.getElementById("selfEvaluation"),
     weekKeyView: document.getElementById("weekKeyView"),
     lastSavedView: document.getElementById("lastSavedView"),
     syncStatusView: document.getElementById("syncStatusView"),
@@ -476,12 +486,6 @@
     const insertText = prefix && !prefix.endsWith("\n") ? "\n" + phrase : phrase;
 
     const nextValue = prefix + insertText + suffix;
-    const limit = Number(target.dataset.maxLength || target.maxLength || 0);
-    if (limit > 0 && nextValue.length > limit) {
-      showLengthLimitMessage(target);
-      return;
-    }
-
     target.value = nextValue;
     const pos = (prefix + insertText).length;
     if (typeof target.setSelectionRange === "function") {
@@ -497,67 +501,16 @@
   }
 
   function showLengthLimitMessage(target) {
-    const limit = Number(target?.dataset?.maxLength || target?.maxLength || 0);
-    if (!limit) return;
-    alert(`最大${limit}文字までです。`);
+    return;
   }
 
   function applyTextLengthLimit(target, limit, label) {
-    if (!target || !limit) return;
-    target.maxLength = limit;
-    target.dataset.maxLength = String(limit);
-    target.dataset.limitLabel = label;
-
-    target.addEventListener("beforeinput", (event) => {
-      if (!event.inputType || !event.inputType.startsWith("insert")) return;
-      const value = String(target.value || "");
-      const start = typeof target.selectionStart === "number" ? target.selectionStart : value.length;
-      const end = typeof target.selectionEnd === "number" ? target.selectionEnd : value.length;
-      const inserted = typeof event.data === "string" ? event.data : "";
-
-      if (inserted && value.length - (end - start) + inserted.length > limit) {
-        event.preventDefault();
-        showLengthLimitMessage(target);
-      } else if (!inserted && start === end && value.length >= limit) {
-        event.preventDefault();
-        showLengthLimitMessage(target);
-      }
-    });
-
-    target.addEventListener("paste", (event) => {
-      const pasted = event.clipboardData?.getData("text") || "";
-      const value = String(target.value || "");
-      const start = typeof target.selectionStart === "number" ? target.selectionStart : value.length;
-      const end = typeof target.selectionEnd === "number" ? target.selectionEnd : value.length;
-      if (value.length - (end - start) + pasted.length <= limit) return;
-      event.preventDefault();
-      showLengthLimitMessage(target);
-    });
-
-    target.addEventListener("input", () => {
-      if (String(target.value || "").length <= limit) return;
-      target.value = String(target.value || "").slice(0, limit);
-      showLengthLimitMessage(target);
-    });
+    return;
   }
 
-  function updateFixedTextCounter(target, counter, limit) {
-    if (!target || !counter) return;
-    counter.textContent = `${String(target.value || "").length} / ${limit}`;
-  }
+  function updateAllFixedTextCounters() {}
 
-  function updateAllFixedTextCounters() {
-    updateFixedTextCounter(el.weeklyAim, el.weeklyAimCount, TEXT_LIMITS.weeklyAim);
-    updateFixedTextCounter(el.events, el.eventsCount, TEXT_LIMITS.events);
-    updateFixedTextCounter(el.weeklyEvaluation, el.weeklyEvaluationCount, TEXT_LIMITS.weeklyEvaluation);
-  }
-
-  function applyFixedTextLengthLimits() {
-    applyTextLengthLimit(el.weeklyAim, TEXT_LIMITS.weeklyAim, "週のねらい");
-    applyTextLengthLimit(el.events, TEXT_LIMITS.events, "行事");
-    applyTextLengthLimit(el.weeklyEvaluation, TEXT_LIMITS.weeklyEvaluation, "1週間の評価");
-    updateAllFixedTextCounters();
-  }
+  function applyFixedTextLengthLimits() {}
 
   function bindTemplatePhraseInput(target) {
     if (!target || target.dataset.templatePhraseBound === "1") return;
@@ -569,8 +522,11 @@
   function bindTemplatePhraseInputs() {
     [
       el.weeklyAim,
+      el.childAppearance,
       el.events,
-      el.weeklyEvaluation
+      el.parentSupport,
+      el.childReflection,
+      el.selfEvaluation
     ].forEach(bindTemplatePhraseInput);
 
     if (el.journalBody) {
@@ -740,28 +696,14 @@
         wrap.appendChild(label);
         wrap.appendChild(ta);
 
-        if (kind === "evaluation") {
-          applyTextLengthLimit(ta, TEXT_LIMITS.evaluation, "保育評価");
-          const count = document.createElement("div");
-          count.className = "charCount";
-          count.textContent = `0 / ${TEXT_LIMITS.evaluation}`;
-          count.dataset.countFor = `day${i}_${kind}`;
-          wrap.appendChild(count);
-        }
         return wrap;
       };
 
+      body.appendChild(makeField("environment", "環境・構成", "◆", "環境・構成を入力してください", "blueLabel"));
       body.appendChild(makeField("activity", "子どもの活動", "♟", "子どもの活動を入力してください", "blueLabel"));
+      body.appendChild(makeField("consideration", "配慮事項", "●", "配慮事項を入力してください", "blueLabel"));
       body.appendChild(makeField("evaluation", "保育評価（日誌）", "▣", "保育評価（日誌）を入力してください", "pinkLabel"));
-      const individualField = makeField("individual", "個別（事例と今後の展望）", "▌", "個別（事例と今後の展望）を入力してください", "blueLabel");
-      const individualTextarea = individualField.querySelector("textarea");
-      applyTextLengthLimit(individualTextarea, TEXT_LIMITS.individualText, "個別");
-      const individualCount = document.createElement("div");
-      individualCount.className = "charCount";
-      individualCount.textContent = `0 / ${TEXT_LIMITS.individualText}`;
-      individualCount.dataset.countFor = `day${i}_individual`;
-      individualField.appendChild(individualCount);
-      body.appendChild(individualField);
+      body.appendChild(makeField("absenceStatus", "欠席状況", "▲", "欠席状況を入力してください", "blueLabel"));
       card.appendChild(body);
 
       head.addEventListener("click", () => {
@@ -840,12 +782,7 @@
     }
   }
 
-  function updateTextareaCounter(textarea) {
-    if (!textarea || !textarea.dataset.field) return;
-    const counter = el.journalBody.querySelector(`[data-count-for="${textarea.dataset.field}"]`);
-    const limit = Number(textarea.dataset.maxLength || textarea.maxLength || TEXT_LIMITS.defaultJournal);
-    if (counter) counter.textContent = `${String(textarea.value || "").length} / ${limit}`;
-  }
+  function updateTextareaCounter(textarea) {}
 
   function updateDayBadgeFromTextarea(textarea) {
     const m = String(textarea?.dataset?.field || "").match(/^day(\d+)_/);
@@ -863,7 +800,7 @@
     const badge = el.journalBody.querySelector(`[data-badge-for="${index}"]`);
     if (!badge) return;
     const els = getJournalRowElements(index);
-    const hasText = [els.activity, els.evaluation, els.individual].some((node) => String(node?.value || "").trim());
+    const hasText = [els.environment, els.activity, els.consideration, els.evaluation, els.absenceStatus].some((node) => String(node?.value || "").trim());
     const isSaved = badge.dataset.saved === "1";
     badge.textContent = hasText ? (isSaved ? "保存済み" : "未保存") : "未入力";
     badge.classList.toggle("active", hasText && !isSaved);
@@ -874,7 +811,7 @@
     const badge = el.journalBody.querySelector(`[data-badge-for="${index}"]`);
     if (!badge) return;
     const els = getJournalRowElements(index);
-    const hasText = [els.activity, els.evaluation, els.individual].some((node) => String(node?.value || "").trim());
+    const hasText = [els.environment, els.activity, els.consideration, els.evaluation, els.absenceStatus].some((node) => String(node?.value || "").trim());
     if (!hasText) return;
 
     try {
@@ -894,7 +831,7 @@
       const badge = el.journalBody.querySelector(`[data-badge-for="${i}"]`);
       if (!badge) continue;
       const els = getJournalRowElements(i);
-      const hasText = [els.activity, els.evaluation, els.individual].some((node) => String(node?.value || "").trim());
+      const hasText = [els.environment, els.activity, els.consideration, els.evaluation, els.absenceStatus].some((node) => String(node?.value || "").trim());
       badge.dataset.saved = hasText ? "1" : "0";
       updateDayBadge(i);
     }
@@ -912,16 +849,18 @@
       }
       updateDayBadge(i);
       const els = getJournalRowElements(i);
-      [els.activity, els.evaluation, els.individual].forEach(updateTextareaCounter);
+      [els.environment, els.activity, els.consideration, els.evaluation, els.absenceStatus].forEach(updateTextareaCounter);
     }
     updateWeeklyAimStatus();
   }
 
   function getJournalRowElements(index) {
     return {
+      environment: el.journalBody.querySelector(`textarea[data-field="day${index}_environment"]`),
       activity: el.journalBody.querySelector(`textarea[data-field="day${index}_activity"]`),
+      consideration: el.journalBody.querySelector(`textarea[data-field="day${index}_consideration"]`),
       evaluation: el.journalBody.querySelector(`textarea[data-field="day${index}_evaluation"]`),
-      individual: el.journalBody.querySelector(`textarea[data-field="day${index}_individual"]`)
+      absenceStatus: el.journalBody.querySelector(`textarea[data-field="day${index}_absenceStatus"]`)
     };
   }
 
@@ -931,8 +870,11 @@
 
     [
       el.weeklyAim,
+      el.childAppearance,
       el.events,
-      el.weeklyEvaluation,
+      el.parentSupport,
+      el.childReflection,
+      el.selfEvaluation,
       el.btnClear
     ].filter(Boolean).forEach((node) => {
       node.disabled = !canEdit;
@@ -941,9 +883,11 @@
     for (let i = 0; i < 6; i++) {
       const slotExists = Boolean(slotDates[i]);
       const rowEls = getJournalRowElements(i);
+      if (rowEls.environment) rowEls.environment.disabled = !canEdit || !slotExists;
       if (rowEls.activity) rowEls.activity.disabled = !canEdit || !slotExists;
+      if (rowEls.consideration) rowEls.consideration.disabled = !canEdit || !slotExists;
       if (rowEls.evaluation) rowEls.evaluation.disabled = !canEdit || !slotExists;
-      if (rowEls.individual) rowEls.individual.disabled = !canEdit || !slotExists;
+      if (rowEls.absenceStatus) rowEls.absenceStatus.disabled = !canEdit || !slotExists;
     }
   }
 
@@ -954,9 +898,12 @@
       classKey: el.classSelect.value || "",
       startDate: startDateIso || "",
       weeklyAim: el.weeklyAim.value || "",
+      childAppearance: el.childAppearance.value || "",
       events: el.events.value || "",
       journal: [],
-      weeklyEvaluation: el.weeklyEvaluation.value || "",
+      parentSupport: el.parentSupport.value || "",
+      childReflection: el.childReflection.value || "",
+      selfEvaluation: el.selfEvaluation.value || "",
       updatedAt: nowIso()
     };
 
@@ -967,9 +914,11 @@
       data.journal.push({
         dateIso: rowDateIso,
         datePretty: rowDate ? formatMDJpDow(rowDate) : "",
+        environment: rowDateIso && els.environment ? els.environment.value : "",
         activity: rowDateIso && els.activity ? els.activity.value : "",
+        consideration: rowDateIso && els.consideration ? els.consideration.value : "",
         evaluation: rowDateIso && els.evaluation ? els.evaluation.value : "",
-        individual: rowDateIso && els.individual ? els.individual.value : ""
+        absenceStatus: rowDateIso && els.absenceStatus ? els.absenceStatus.value : ""
       });
     }
 
@@ -979,15 +928,20 @@
   function clearCurrentInputs(keepClass = true) {
     const classValue = keepClass ? (el.classSelect.value || "") : "";
     el.weeklyAim.value = "";
+    el.childAppearance.value = "";
     el.events.value = "";
-    el.weeklyEvaluation.value = "";
+    el.parentSupport.value = "";
+    el.childReflection.value = "";
+    el.selfEvaluation.value = "";
     updateAllFixedTextCounters();
 
     for (let i = 0; i < 6; i++) {
       const els = getJournalRowElements(i);
+      if (els.environment) els.environment.value = "";
       if (els.activity) els.activity.value = "";
+      if (els.consideration) els.consideration.value = "";
       if (els.evaluation) els.evaluation.value = "";
-      if (els.individual) els.individual.value = "";
+      if (els.absenceStatus) els.absenceStatus.value = "";
     }
 
     if (!keepClass) {
@@ -1129,6 +1083,7 @@
 
   function applyDataToInputs(data) {
     el.weeklyAim.value = data.weeklyAim ?? "";
+    el.childAppearance.value = data.childAppearance ?? "";
     el.events.value = data.events ?? "";
 
     const journal = Array.isArray(data.journal) ? data.journal : [];
@@ -1137,12 +1092,16 @@
       const row = journal[i] || {};
       const rowEls = getJournalRowElements(i);
       const isActiveSlot = Boolean(slotDates[i]);
+      if (rowEls.environment) rowEls.environment.value = isActiveSlot ? (row.environment || "") : "";
       if (rowEls.activity) rowEls.activity.value = isActiveSlot ? (row.activity || "") : "";
+      if (rowEls.consideration) rowEls.consideration.value = isActiveSlot ? (row.consideration || "") : "";
       if (rowEls.evaluation) rowEls.evaluation.value = isActiveSlot ? (row.evaluation || "") : "";
-      if (rowEls.individual) rowEls.individual.value = isActiveSlot ? (row.individual || "") : "";
+      if (rowEls.absenceStatus) rowEls.absenceStatus.value = isActiveSlot ? (row.absenceStatus || "") : "";
     }
 
-    el.weeklyEvaluation.value = data.weeklyEvaluation ?? "";
+    el.parentSupport.value = data.parentSupport ?? "";
+    el.childReflection.value = data.childReflection ?? "";
+    el.selfEvaluation.value = data.selfEvaluation ?? "";
     updateAllFixedTextCounters();
     el.lastSavedView.textContent = data.updatedAt || "—";
     if (el.weeklyAimSaveStatus) el.weeklyAimSaveStatus.dataset.saved = hasWeeklyAimText() ? "1" : "0";
@@ -1620,15 +1579,20 @@
       classKey: data.classKey ?? "",
       startDate: toSlashDate(data.startDate),
       weeklyAim: data.weeklyAim ?? "",
+      childAppearance: data.childAppearance ?? "",
       events: data.events ?? "",
-      weeklyEvaluation: data.weeklyEvaluation ?? ""
+      parentSupport: data.parentSupport ?? "",
+      childReflection: data.childReflection ?? "",
+      selfEvaluation: data.selfEvaluation ?? ""
     };
 
     for (let i = 0; i < 6; i++) {
       row[`day${i}Date`] = toSlashDate(data.journal?.[i]?.dateIso ?? "");
+      row[`day${i}Environment`] = data.journal?.[i]?.environment ?? "";
       row[`day${i}Activity`] = data.journal?.[i]?.activity ?? "";
+      row[`day${i}Consideration`] = data.journal?.[i]?.consideration ?? "";
       row[`day${i}Evaluation`] = data.journal?.[i]?.evaluation ?? "";
-      row[`day${i}Individual`] = data.journal?.[i]?.individual ?? "";
+      row[`day${i}AbsenceStatus`] = data.journal?.[i]?.absenceStatus ?? "";
     }
 
     return row;
@@ -1751,9 +1715,11 @@
       journal.push({
         dateIso,
         datePretty: dateObj ? formatMDJpDow(dateObj) : "",
+        environment: slotDateIso ? (obj[`day${i}Environment`] ?? "") : "",
         activity: slotDateIso ? (obj[`day${i}Activity`] ?? "") : "",
+        consideration: slotDateIso ? (obj[`day${i}Consideration`] ?? "") : "",
         evaluation: slotDateIso ? (obj[`day${i}Evaluation`] ?? "") : "",
-        individual: slotDateIso ? (obj[`day${i}Individual`] ?? "") : ""
+        absenceStatus: slotDateIso ? (obj[`day${i}AbsenceStatus`] ?? "") : ""
       });
     }
 
@@ -1761,9 +1727,12 @@
       classKey,
       startDate,
       weeklyAim: obj.weeklyAim || "",
+      childAppearance: obj.childAppearance || "",
       events: obj.events || "",
       journal,
-      weeklyEvaluation: obj.weeklyEvaluation || "",
+      parentSupport: obj.parentSupport || "",
+      childReflection: obj.childReflection || "",
+      selfEvaluation: obj.selfEvaluation || "",
       updatedAt: nowIso()
     };
   }
@@ -1866,14 +1835,19 @@
   function hasAnyWeekContent(week) {
     if (!week) return false;
     if (String(week.weeklyAim || "").trim()) return true;
+    if (String(week.childAppearance || "").trim()) return true;
     if (String(week.events || "").trim()) return true;
-    if (String(week.weeklyEvaluation || "").trim()) return true;
+    if (String(week.parentSupport || "").trim()) return true;
+    if (String(week.childReflection || "").trim()) return true;
+    if (String(week.selfEvaluation || "").trim()) return true;
 
     const journal = Array.isArray(week.journal) ? week.journal : [];
     return journal.some((row) => {
-      return String(row?.activity || "").trim()
+      return String(row?.environment || "").trim()
+        || String(row?.activity || "").trim()
+        || String(row?.consideration || "").trim()
         || String(row?.evaluation || "").trim()
-        || String(row?.individual || "").trim();
+        || String(row?.absenceStatus || "").trim();
     });
   }
 
@@ -2301,8 +2275,11 @@
 
   [
     el.weeklyAim,
+    el.childAppearance,
     el.events,
-    el.weeklyEvaluation
+    el.parentSupport,
+    el.childReflection,
+    el.selfEvaluation
   ].forEach((inp) => {
     inp.addEventListener("input", () => {
       if (inp === el.weeklyAim) markWeeklyAimUnsaved();
